@@ -32,9 +32,11 @@ var todos = [
  * HTML Endpoints
  */
 
+//this enpoint loads the homepage views index.html file
+// 
 app.get('/', function homepage(req,res){
   res.sendFile(__dirname + '/views/index.html');
-});
+});//
 
 
 /*
@@ -54,27 +56,41 @@ app.get('/api/todos/search', function search(req, res) {
    */
 });
 
+//GET : get all
 app.get('/api/todos', function index(req,res){
+  //sends back all of the todos as a json response
   res.json({todos: todos});
 });
 
 
-//make a new todo 
+//POST : create a new todo
 app.post('/api/todos', function create(req, res) {
-  todos.push(req.body);
-  var id = todos.length;
-
-  req.body._id = id;
-  res.json(req.body);
-  
-  // assign an id 
+//store the body of the request in a variable
+  var newTodoVar = req.body;
+  //if the todos array length is > 0 ...
+  if (todos.length >0){
+    //get the _id: value of the todo that just came in,
+    //increments the id number value by one each time one is created
+    
+    newTodoVar._id = todos[todos.length-1]._id + 1;
+  } else {
+    //only happens if the todos.length =  0 , we can create a new todo
+    //as the first one in the array
+    newTodoVar._id = 1;
+  }
+  //push the incoming todo object into the todos array
+  todos.push(newTodoVar);
+  //send the todo response as a json object
+  res.json(newTodoVar);
 
 
 });
 
 app.get('/api/todos/:id', function show(req, res) {
-  
-    res.json(todos[req.params._id-1]);
+      
+    // /'req.params.id' is the query string number (:id)
+    //that is coming in...
+    res.json(todos[req.params.id-1]);
     
     
   /* This endpoint will return a single todo with the
@@ -82,43 +98,53 @@ app.get('/api/todos/:id', function show(req, res) {
    */
 });
 
+// PUT :  update a single todo by it's id
 app.put('/api/todos/:id', function update(req, res) {
-  /* This endpoint will update a single todo with the
-   * id specified in the route parameter (:id) and respond
-   * with the newly updated todo.
-   */
+  // get url ('params') string, parse it, 
+  //get the id of the parsed object and store it in variable
+  var getIdofTodo = parseInt(req.params.id);
+  console.log(req.params.id);
 
-   var todosPut = parseInt(req.params.id);
-   
-   //filter through all of the todos and find its id#
-   var putNewTodo = todos.filter(function (todo){
-    return todo._id == todosPut;
-   });
-    putNewTodo = req.body.task;
-    putNewTodo.description = req.body.description;
-    res.json(putNewTodo);
+  // find todo to update by its id
+  var putUpdate = todos.filter(function (todo) {
+    return todo._id == getIdofTodo;
+  })[0];
 
+  // take the req's .task from its .body and store it in putUpdate
+  putUpdate.task = req.body.task;
+
+  // take the req's descript from its .body and store it in putUpdate
+  putUpdate.description = req.body.description;
+
+  // send back updated todo
+  res.json(putUpdate);
 });
 
 
-//todos[req.params._id-1] = req.body;
-//res.json(todos[req.params._id-1]);
 
+
+
+// DELETE : delete todo
 app.delete('/api/todos/:id', function destroy(req, res) {
-  /* This endpoint will delete a single todo with the
-   * id specified in the route parameter (:id) and respond
-   * with deleted todo.
-   */
-    var todoId = parseInt(req.params.id);
-    var deleteTodo = todos.filter(function(todo){
-      return todo._id == todoId;
-    })[0];
-    //allows items to be deleted off of the web page
-    todos.splice(todos.indexOf(deleteTodo),1);
+  // get todo id from url params (`req.params`)
+  // and store it in the idTdod var
+  var idTodo = parseInt(req.params.id);
 
-    res.json(deleteTodo);
+  // find todo to delete by its id
+  var deleteTodo = todos.filter(function (todo) {
+    //filter through all of the todos
+    return todo._id == idTodo;
+  })[0];
+
+  // remove todo from the todo from the array
+  //we are going to splice at the indx of todoDelete, and remove one item
+  todos.splice(todos.indexOf(deleteTodo), 1);
+
+  // send back deleted todo
+  res.json(deleteTodo);
 });
 
+//
 /**********
  * SERVER *
  **********/
